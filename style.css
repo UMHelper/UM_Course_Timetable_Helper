@@ -1,10 +1,22 @@
 body, input, select {
-	font-family: Tahoma, Geneva, sans-serif;
+	font-family: Arial, sans-serif;
 	font-size: 13px;
+	color: #1a1a1a;
+}
+div.col.day-col,
+ul#courselist > li li,
+#study-plan p small {
+	font-family: "Courier New", monospace;
 }
 body, h1, h2, h3, h4, h5, h6, p {
 	padding:0;
 	margin:0;
+}
+body {
+	background: #fafafa;
+}
+header h2, header p {
+	display: inline-block;
 }
 ul {
 	margin-top:0;
@@ -47,8 +59,24 @@ body {
 	padding:20px;
 }
 form {
-	padding:5px 0 25px 0;
+	/*padding:5px 0 25px 0;*/
 }
+::placeholder {
+	color: #ccc;
+	font-size: 13px;
+}
+.upd-sp {
+	background: dodgerblue;
+	padding: 1px 4px;
+	-webkit-border-radius:3px;
+	border-radius: 3px;
+	color: #fff;
+}
+
+
+span.line, span.line label {display: inline-block; vertical-align: middle;}
+span.line label {line-height: 13px;}
+
 div#wrapper {
 	width:888px;
 	overflow: hidden;
@@ -90,8 +118,8 @@ div.col a, div.col div {
 	position: absolute;
 	left:0;
 	right:0;
-	border:1px solid #000;
-	color:#000;
+	border:1px solid #1a1a1a;
+	color:#1a1a1a;
 	text-align: center;
 	font-size:12px;
 	overflow:hidden;
@@ -104,7 +132,11 @@ div.col a, div.col div {
 .selected-course div.col a,
 div.col.other-col a small {
 	white-space: nowrap;
-	text-overflow: ellipsis;
+	/*text-overflow: ellipsis;*/
+	letter-spacing: -1px;
+}
+div.col a span.text-marq {
+	position: relative;
 }
 div.col.other-col a small {
 	opacity: 0.3;
@@ -177,7 +209,7 @@ div.col a:hover span.alt-text {
 }
 div.col.timestamps {
 	color:#ccc;
-	border-color:#fff;
+	border:0;
 	width:40px;
 }
 div.col.timestamps div {
@@ -197,6 +229,7 @@ textarea {
 	-webkit-border-radius:3px;
 	border-radius:3px;
 	outline:0;
+	background: #fff;
 }
 textarea {
 	overflow: hidden;
@@ -208,6 +241,10 @@ textarea:hover  {
 input[type="text"]:focus,
 textarea:focus  {
 	border-color:#0089ff;
+}
+#isw-form {
+	margin-top: -10px;
+	padding-top: 10px;
 }
 #isw-form textarea {
 	width:100%;
@@ -233,6 +270,9 @@ a.button-like:hover {
 	background:#ccc;
 	color:#222;
 }
+input[type="submit"] {
+	-webkit-appearance: none;
+}
 #isw-form input[type="submit"] {
 	background: darkturquoise;
 	color:#fff;
@@ -250,7 +290,7 @@ a.button-like:hover {
 	padding: 10px 0 3px 0;
 	display: block;
 }
-a#lock, a#scroll-lock {
+/*a#lock, a#scroll-lock {
 	display: block;
 	text-align: center;
 	height:48px;
@@ -264,10 +304,10 @@ a#lock, a#scroll-lock {
 	background: #f1f1f1;
 	width:140px;
 	position: relative;
-}
+}*/
 /*a#scroll-lock {*/
 
-a#scroll-lock {display: none;}
+a#scroll-lock, a#lock {display: none;}
 
 /* a#lock {
 	position: fixed;
@@ -280,7 +320,7 @@ a#scroll-lock {display: none;}
 	z-index:99;
 } */
 
-a#lock {display: none;}
+/*a#lock {display: none;}
 
 a#scroll-lock .textunlock,
 .lockScreen a#scroll-lock .textlock {
@@ -335,14 +375,14 @@ a#lock.lock #lock-on {
 }
 a#lock.lock #lock-off,
 a#lock.unlock #lock-on {
-	color:#000;
+	color:#1a1a1a;
 }
 a#lock.lock #lock-off {
 	left:-10px;
 }
 a#lock.unlock #lock-on {
 	right:-10px;
-}
+}*/
 li p {
 	padding-top:8px;
 }
@@ -374,7 +414,7 @@ li p, li li {
 hr {
 	border:0;
 	background:transparent;
-	border-top:1px dotted #000;
+	border-top:1px dotted #1a1a1a;
 	padding:0;
 	margin:3px;
 	display: block;
@@ -383,14 +423,17 @@ hr.full {
 	margin:25px -5px;
 	border-top:1px solid #ccc;
 }
-li.announce {
+a.dodg {
+	color:dodgerblue;
+}
+/*li.announce {
 	padding:5px 0;
 	color:#ff6a00;
 	font-size: 14px;
 }
 li.announce a {
 	color:#ff6a00;
-}
+}*/
 .input-wrap {
 	position: relative;
 	display: inline-block;
@@ -460,11 +503,13 @@ a.pclear {
 p.br {
 	padding:20px;
 	position: fixed;
-	right: 0;
-	top:0;
-	background: #222;
+	right: 5px;
+	top:5px;
+	background: #36ccdf;
 	color:#fff;
 	z-index:120;
+	-webkit-border-radius:3px;
+	border-radius: 3px;
 }
 @media screen and (min-width:1276px){
 	div#courses-list {
@@ -479,16 +524,18 @@ p.br {
 		overflow-y: scroll;
 	}
 	div#courses-list h4 {
-		padding-top: 20px;
+		margin-top: 10px;
+		padding-top: 10px;
 	}
 	body {
 		margin-right: 28%;
 	}
-	body.lockScreen {
+	/*body.lockScreen {
 		overflow: hidden;
-	}
+	}*/
 	p.br {
 		right:28%;
+		top: 0;
 		margin:10px;
 		/* top:58px; */
 	}
@@ -497,11 +544,12 @@ p.br {
 	}
 }
 @media screen and (max-width:1275px){
-	a#scroll-lock {
+	/*a#scroll-lock {
 		display: none;
-	}
+	}*/
 	div#courses-list h4 {
-		padding-top: 18px;
+		margin-top: 8px;
+		padding-top: 10px;
 	}
 	.min-only {
 		display: none !important;
@@ -537,7 +585,28 @@ a.btn-like:hover {
 	color:#222;
 	text-decoration: underline;
 }
-#courses-list li a {
+#courses-list li.no-dots {
+	list-style-type: none;
+}
+#courses-list li a.course-hide {
+	margin: 0 -91px -13px -24px;
+	padding: 3px 99px 10px 5px;
+	display: inline-block;
+	position: relative;
+	z-index: 1;
+	text-decoration: none;/*
+	-webkit-border-radius: 2px;
+	border-radius: 2px;*/
+}
+#courses-list li a.course-hide:hover {
+	color: #4b4b4b !important;
+}
+#courses-list li a.course-hide:hover + b {
+	text-decoration: line-through;
+	color: #6a6a6a;
+}
+#courses-list li a.add,
+#courses-list li a.del {
 	padding:10px;
 	-webkit-border-radius:3px;
 	border-radius:3px;
@@ -549,12 +618,27 @@ a.btn-like:hover {
 	font-size: 14px;
 	height: 18px;
 }
-#courses-list li a:before {
-	font-size: 30px;
+#courses-list li a.add:before,
+#courses-list li a.del:before {
+	padding-right: 5px;
+}
+#courses-list li a.add:before,
+#courses-list li a.del:before, 
+a.umacinfo:after {
+	/*font-size: 30px;
 	display: inline-block;
 	vertical-align: top;
 	padding-right: 3px;
-	margin-top: -10px;
+	margin-top: -10px;*/
+
+	/* from .fa */
+	display: inline-block;
+	font: normal normal normal 14px/1 FontAwesome;
+	font-size: inherit;
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	/*padding-right: 5px;*/
 }
 #courses-list li a.del {
 	background: #ffdada;
@@ -564,13 +648,13 @@ a.btn-like:hover {
 	background: #ffc9c9;
 }
 #courses-list li a.del:before {
-	content:'\d7';
+	content:"\f00d";
 }
 #courses-list li a.add:hover {
 	background: #0282ff;
 }
 #courses-list li a.add:before {
-	content:'+';
+	content:"\f067";
 }
 #courses-list.active li a.add,
 #courses-list.inactive li.inactive a.add,
@@ -609,6 +693,7 @@ ul#courselist > li > h3 + p {
 	color:peru;
 	display: inline-block;
 	padding:3px;
+	vertical-align: bottom;
 }
 .umac-info {
 	display: block;
@@ -647,17 +732,19 @@ ul#courselist > li > h3 + p {
 #study-plan p {
 	padding-bottom: 8px;
 }
-#study-plan a, p.br a {
+#study-plan a /*, p.br a*/ {
 	color:dodgerblue;
 	text-decoration: none;
 }
 p.br a {
-	padding:5px 10px;
+	/*padding:5px 10px;*/
 	display: block;
+	color: #fff;
+	text-decoration: none;
 }
-a#scroll-lock {
+/*a#scroll-lock {
 	z-index:120;
-}
+}*/
 a.styled {
 	padding: 8px 13px;
 	/*background: #222;*/
@@ -680,14 +767,7 @@ a.styled#undo,
 a.styled#redo {
 	background-size: 36px auto;
 }
-/*a.styled#undo:before {
-	content:'＜';
-	left:-3px;
-}
-a.styled#redo:after {
-	content:'＞';
-	right: -3px;
-}*/
+
 a.styled#undo:before,
 a.styled#redo:after {
 	position: relative;
@@ -724,45 +804,52 @@ a.umacinfo, span.umacinfo {
 	-webkit-border-radius:3px;
 	border-radius:3px;
 	margin:0;
+	vertical-align: bottom;
 }
 span.umacinfo {
-	color: #ed143d;
-	padding: 5px 0;
+	color: #999;
+	/*padding: 0 2px;*/
 }
 a.umacinfo {
-	padding:5px 7px;
-	background: #fff;
+	padding:2px 7px;
+	background: rgba(255,255,255,0.8);
 	color: #aaa !important;
+	margin: 3px 0 0 3px;
+	border:1px solid rgba(0,0,0,0.07);
 }
 a.umacinfo:after {
-	content: '\ff1e';
+	content: "\f105";
+	padding-left: 4px;
+/*	content: '\ff1e';
 	-webkit-transform: scale(0.4,0.9);
 	transform: scale(0.4,0.9);
 	position: relative;
 	display: inline-block;
 	padding-left: 2px;
+*/
 }
 
+p.br { padding: 5px 10px; text-align: center; font-size: 12px;}
+p.br a {padding: 5px; font-size: 17px;}
 
 @media screen and (max-width:1275px){	
 	p.br {
 		padding: 0 15px;
 	}
 	p.br a {
-		padding: 13px 7px;
+		padding: 13px 10px;
 		display: inline-block;
 	}
-	a#lock {
+	/*a#lock {
 		position: relative;
 		right: auto;
-	}
+	}*/
 }
 
 
 @media screen and (max-width:799px){
-	body {padding-top: 80px;}
+	body {padding-top: 60px;}
 }
 
-p.br { padding: 5px 10px; }
-p.br a { padding: 0; }
-p.br a img { height: 23px; padding: 5px 15px; vertical-align: middle; }
+/*p.br a { padding: 0; }*/
+/*p.br a img { height: 23px; padding: 5px 15px; vertical-align: middle; }*/

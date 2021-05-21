@@ -7,8 +7,66 @@ var course_sec_length = 3;
 
 var default_block = {bg: "#d9d9d9", col: "#888888"}
 
-String.prototype.cleanup = function() {
-   return this.toLowerCase().replace(/[^a-z]+/g, "");
+// String.prototype.cleanup = function() {
+//    return this.toLowerCase().replace(/[^a-z]+/g, "");
+// }
+
+function checkTextOverflow(){
+	var spans = document.querySelectorAll(".day-col a span.text-marq");
+	var margin_px = 5;
+	var px_per_frame = 1;
+
+	for(var span of spans) {
+		var col_width = $(span.parentElement).width();
+
+		if((span.offsetWidth - 2) < col_width) {
+			$(span).removeClass("text-marq");
+			continue;
+		}
+		// if(span.innerHTML.length > 19) {
+		// should run
+
+		var left = margin_px;
+
+		if(span.style.left) {
+			left = (parseInt(span.style.left) - px_per_frame);
+		}
+
+		if(left < (col_width - margin_px - span.offsetWidth)) {
+			left = margin_px;
+		}
+
+		span.style.left = left + 'px';
+		// span.style.marginLeft = left < margin_px ? 0 : ((margin_px - left) + 'px');
+		span.style.visibility = (left === margin_px) ? 'hidden' : '';
+		// }
+	}
+}
+
+function isLab(obj) {
+
+	// if this session is a Lab class
+	if (obj.type ==="Lab") {
+		var countLab = 0;
+
+		// loop through courses list
+		for(var course of courses_info) {
+
+			// find Lab for this course
+			if(course.code === obj.code && course.type === "Lab") {
+				countLab++;
+
+				// if more than one, then OK.
+				if(countLab > 1){
+					break;
+				}
+			}
+		}
+		return (countLab > 1);
+	}
+	else {
+		return false;
+	}
 }
 
 function match_course(content, with_section){
@@ -48,23 +106,46 @@ if(localStorage["coursesJson"]){
 
 	for(var i=0; i<tmp_courses.length; i++){
 
-		if(looked_courses.indexOf(tmp_courses[i].code)>-1){
+		var this_courseCode = tmp_courses[i].code;
+
+		if(looked_courses.indexOf(this_courseCode)>-1){
 			continue;
 		}
 
-		looked_courses.push(tmp_courses[i].code);
+		looked_courses.push(this_courseCode);
 
 		var found = false;
 
 		for(var j=0; j<courses_info.length; j++){
-			if(courses_info[j].code === tmp_courses[i].code){
+			if(courses_info[j].code === this_courseCode){
 				found = true;
-				courses.push(courses_info[j]);
+				var skipThisSection = false;
+
+				for(var k=0; k<tmp_courses.length; k++) {
+					if(tmp_courses[k].code === this_courseCode && tmp_courses[k].isRemoved) {
+
+						if(isLab(courses_info[j])
+							&& courses_info[j].start === tmp_courses[k].start
+							&& courses_info[j].day === tmp_courses[k].day) {
+
+							skipThisSection = true;
+						}
+					}
+				}
+
+				if(skipThisSection) {
+					var cloneObj = JSON.parse(JSON.stringify(courses_info[j]));
+					cloneObj.isRemoved = true;
+					courses.push(cloneObj);
+				}
+				else {
+					courses.push(courses_info[j]);
+				}
 			}
 		}
 
-		if(!found){
-			error_courses.push(tmp_courses[i].code);
+		if(found === false && this_courseCode.trim() !== ""){
+			error_courses.push(this_courseCode);
 		}
 	}
 
@@ -79,13 +160,13 @@ var totalHeight = 600;
 var lineHeight = 12;
 var dayName = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
 var dayDisp = [
-	"Sun(日)",
-	"Mon(一)",
-	"Tue(二)",
-	"Wed(三)",
-	"Thu(四)",
-	"Fri(五)",
-	"Sat(六)"
+	"日(Sun)",
+	"一(Mon)",
+	"二(Tue)",
+	"三(Wed)",
+	"四(Thu)",
+	"五(Fri)",
+	"六(Sat)"
 ];
 var errorDiv = document.getElementById("error");
 var courseListDiv = document.getElementById("courselist");
@@ -114,6 +195,11 @@ var studyPlanDiv = document.getElementById("study-plan");
 var studyPlanLink = document.getElementById("studyplan-link");
 studyPlanLink.style.display = "none";
 
+var profBtn = 0;
+
+var searched_umacinfo = {};
+var studyPlanHeader = "<b><i class=\"fa fa-list-alt\" aria-hidden=\"true\"></i> 可選擇的課程列表 Available Courses List</b>";
+
 var allSlotItems = [];
 var blackListSlot = [];
 var selectedCourseCount = 0;
@@ -129,15 +215,15 @@ function getSelectedCourseCodeList(){
 	return arr;
 }
 
-function lockScrollToggle(){
-	var body = document.getElementById("body");
-	if(body.className === ""){
-		body.className = "lockScreen";
-	}
-	else{
-		body.className = "";
-	}
-}
+// function lockScrollToggle(){
+// 	var body = document.getElementById("body");
+// 	if(body.className === ""){
+// 		body.className = "lockScreen";
+// 	}
+// 	else{
+// 		body.className = "";
+// 	}
+// }
 function changeValue(courseCode){
 	document.getElementById("coursename").value = courseCode;
 	return true;
@@ -149,17 +235,31 @@ if(urlParam.indexOf("course=") > -1){
 	add(courseCode_param);
 	hasUrlParam = true;
 }
-function lockToggle(){
-	if(localStorage["lockMode"] && localStorage["lockMode"]==="lock"){
-		localStorage["lockMode"] = "unlock";
-	}
-	else{
-		localStorage["lockMode"] = "lock";
-	}
-	genIt(null, null, true);
-}
+// function lockToggle(){
+// 	if(localStorage["lockMode"] && localStorage["lockMode"]==="lock"){
+// 		localStorage["lockMode"] = "unlock";
+// 	}
+// 	else{
+// 		localStorage["lockMode"] = "lock";
+// 	}
+// 	genIt(null, null, true);
+// }
 function convertToStamp(t){
 	return (parseInt(t.substr(0,2)) * 60) + (parseInt(t.substr(3,2)) * 1);
+}
+function convertToDisp(t){
+	if(t == '') {
+		return t;
+	}
+	var time = convertToStamp(t);
+
+	var hour = parseInt(time/60);
+	var min = parseInt(time % 60);
+
+	if(min < 10) {
+		min = '0' + min
+	}
+	return hour + ":" + min;
 }
 function addToScreen(target, el, i){
 	window.setTimeout(function(){
@@ -210,20 +310,20 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 	}
 
 
-	if(
-		allCourseMode===true ||
-		(localStorage["lockMode"] && localStorage["lockMode"]==="lock")
-	){
-		document.getElementById("overlay").className = "lock";
-		document.getElementById("lock").className = "lock";
-		localStorage["lockMode"] = "lock";
-		// document.getElementById("lock").innerHTML = "按此解鎖 Click to unlock<br><small>解鎖後，您將可以從課程表中刪除科目<br>Unlock to remove course(s) from timetable.</small>";
-	}
-	else{
-		document.getElementById("overlay").className = "unlock";
-		document.getElementById("lock").className = "unlock";
-		// document.getElementById("lock").innerHTML = "按此鎖定 Click to lock<br><small>鎖定課程表能避免誤刪課程<br>Lock to protect course(s) from removing.</small>";
-	}
+	// if(
+	// 	allCourseMode===true ||
+	// 	(localStorage["lockMode"] && localStorage["lockMode"]==="lock")
+	// ){
+	// 	document.getElementById("overlay").className = "lock";
+	// 	document.getElementById("lock").className = "lock";
+	// 	localStorage["lockMode"] = "lock";
+	// 	// document.getElementById("lock").innerHTML = "按此解鎖 Click to unlock<br><small>解鎖後，您將可以從課程表中刪除科目<br>Unlock to remove course(s) from timetable.</small>";
+	// }
+	// else{
+	// 	document.getElementById("overlay").className = "unlock";
+	// 	document.getElementById("lock").className = "unlock";
+	// 	// document.getElementById("lock").innerHTML = "按此鎖定 Click to lock<br><small>鎖定課程表能避免誤刪課程<br>Lock to protect course(s) from removing.</small>";
+	// }
 	earliest = undefined;
 	latest = undefined;
 	timetable.innerHTML = template;
@@ -277,7 +377,7 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 
 	for(var i=0; i<courses_list.length; i++){
 
-		if(!courses_list[i].code){
+		if(!courses_list[i].code || courses_list[i].isRemoved){
 			continue;
 		}
 
@@ -329,14 +429,14 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 
 	for(var i=0; i<courses_list.length; i++){
 
-		if(!courses_list[i].code){
+		if(!courses_list[i].code || courses_list[i].isRemoved){
 			continue;
 		}
 		var tmpLineHeight = lineHeight;
 		var weekday = dayName.indexOf(courses_list[i].day);
 		if(weekday > -1){
 			if(allCourseMode === true){
-				var basicHTML = "<small>" + courses_list[i].code + "<br><small>" + courses_list[i].start + "-" + courses_list[i].end + " @ " + courses_list[i].venue + "</small></small>";
+				var basicHTML = courses_list[i].code + "<br>" + courses_list[i].start + "-" + courses_list[i].end + "<br>" + courses_list[i].venue;
 				// var prevFound = false;
 				// for(var k=0; k<i; k++){
 				// 	if(
@@ -360,7 +460,12 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 			var div = document.createElement("a");
 			var this_id = courses_list[i].code + "-" +courses_list[i].start + "-" +courses_list[i].end + "-" +courses_list[i].day;
 			if(allCourseMode === false){
-				div.href = "javascript:deleteIt('" + courses_list[i].code + "')";
+				if (isLab(courses_list[i])) {
+					div.href = "javascript:removeSection(" + i + ")";
+				}
+				else {
+					div.href = "javascript:deleteIt('" + courses_list[i].code + "')";
+				}
 			}
 			else{
 				div.href = "javascript:filterIt(" + weekday + "," + elCollection[weekday].length + ")";
@@ -370,14 +475,19 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 			div.style.height = parseInt(divHeight) + "px";
 			var paddingTop = (divHeight - (tmpLineHeight*4)) / 2;
 			if(allCourseMode === false){
-				var basicHTML = courses_list[i].code + "<br><small><small>" + courses_list[i].name + "</small></small><br><small>" + courses_list[i].venue + "<br>" + courses_list[i].start + "-" + courses_list[i].end + "</small>";
+				var basicHTML = courses_list[i].code + "<br><span class=\"text-marq\">" + courses_list[i].name + "</span><br>" + courses_list[i].venue + "<br>" + courses_list[i].start + "-" + courses_list[i].end;
+
+				if(isLab(courses_list[i])) {
+					basicHTML += '[Lab]';
+				}
+
 				if(paddingTop > 0){
 				 	div.innerHTML = basicHTML;
 				}
 				else{
-					tmpLineHeight = 8;
-					var paddingTop = (divHeight - (tmpLineHeight*3)) / 2;
-					div.innerHTML = "<small>" + courses_list[i].code + "<br><small>" + courses_list[i].name + "</small><br>" + courses_list[i].start + "-" + courses_list[i].end + ", " + courses_list[i].venue + "</small>";
+					tmpLineHeight = 12;
+					var paddingTop = (divHeight - (tmpLineHeight*2)) / 2;
+					div.innerHTML = courses_list[i].code + "<br>@" + courses_list[i].start + '/' + courses_list[i].venue;
 				}
 			}
 			else{
@@ -420,7 +530,7 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 				div.appendChild(span);
 				var span = document.createElement("span");
 				span.className = "alt-text";
-				span.innerHTML = courses_list[i].code;
+				span.innerHTML = isLab(courses_list[i]) ? "[Lab]" : courses_list[i].code;
 				span.style.height = tmpLineHeight + "px";
 				div.appendChild(span);
 			}
@@ -553,7 +663,7 @@ function genIt(courses_list, no_scroll, is_ctrlZ){
 	// for(var i=courses_list.length-1; i>=0; i--){
 	for(var i=0; i<courses_list.length; i++){
 
-		if(!courses_list[i].code){
+		if(!courses_list[i].code || courses_list[i].isRemoved){
 			continue;
 		}
 		if(courses_list[i].code !== previousCourse){
@@ -609,13 +719,27 @@ if(!document.getElementById(ths_id)){
 	var li_el = document.createElement("li");
 	li_el.id = ths_id;
 
-	li_el.innerHTML += "<b>" + dayDisp[dayIndex] + " " + ths.start + "-" + ths.end + "</b><br>" + ths.venue + (ths.type==='Lecture' ? '' : " (" + ths.type + ")");
+	if (allCourseMode!==true && isLab(ths)) {
+		var btnColor = used_colors_list[courses_list[i].code];
+
+		if(!btnColor) {
+			btnColor = "#607d8b";
+		}
+		li_el.className = "no-dots";
+		li_el.innerHTML += "<a href=\"javascript:removeSection("+i+")\" class=\"course-hide\" style=\"color: " + btnColor + "\"><i class=\"fa fa-trash-o\" title=\"Hide\"></i></a>";
+	}
+
+	li_el.innerHTML += "<b>" + dayDisp[dayIndex] + " " + ths.start + "-" + ths.end + "</b><br>"+ ths.venue + (ths.type==='Lecture' ? '' : "(" + ths.type + ")");
 
 	// console.log(ths.code);
 
 	for(var ix in courses){
 
 		var oppose = courses[ix];
+
+		if(oppose.isRemoved) {
+			continue;
+		}
 
 		if(
 			oppose.code !== ths.code
@@ -1002,13 +1126,73 @@ function add(coursecode, is_importing, should_remain){
 			removeError();
 		}
 		// document.getElementById("coursename").value = "";
-		localStorage["lockMode"] = "unlock";
+		// localStorage["lockMode"] = "unlock";
 	}
 	genIt()
 }
 function clear_input(){
 	document.getElementById("coursename").value = "";
 	fetchIt();
+	genIt(null, true);
+}
+
+// function keepOnly(i) {
+// 	var this_courseCode = courses[i].code;
+// 	var hasRemovedAnySection = false;
+
+// 	for(var j=0; j<courses.length; j++) {
+// 		if(courses[j].code === this_courseCode && isLab(courses[j])){
+// 			if(j !== i){
+// 				if(courses[j].isRemoved) {
+// 					hasRemovedAnySection = true;
+// 					break;
+// 				}
+// 				courses[j].isRemoved = true;
+// 			}
+// 		}
+// 	}
+
+// 	if(hasRemovedAnySection) {
+// 		// add all section back
+
+// 		for(var j=0; j<courses.length; j++){
+// 			if(courses[j].code === this_courseCode && isLab(courses[j])){
+// 				delete courses[j].isRemoved;
+// 			}
+// 		}
+// 	}
+// 	genIt(null, true);
+// }
+
+function removeSection(i){
+	courses[i].isRemoved = true;
+
+	var this_courseCode = courses[i].code;
+	var totalLab = 0;
+	var totalRemovedLab = 0;
+
+	for(var j=0; j<courses.length; j++) {
+		if(courses[j].code === this_courseCode && isLab(courses[j])){
+			totalLab++;
+
+			if(courses[j].isRemoved) {
+				totalRemovedLab++;
+			}
+		}
+	}
+
+	// if all labs are removed
+	if(totalRemovedLab === totalLab) {
+		// add back all the lab.
+
+		alert(this_courseCode + ": 你不可以移除全部Lab。");
+
+		for(var j=0; j<courses.length; j++){
+			if(courses[j].code === this_courseCode && isLab(courses[j])){
+				delete courses[j].isRemoved;
+			}
+		}
+	}
 	genIt(null, true);
 }
 function deleteIt(courseCode){
@@ -1021,6 +1205,7 @@ function deleteIt(courseCode){
 	// }
 	for(var i=courses.length-1; i>=0; i--){
 		if(courses[i].code === courseCode){
+			delete courses[i].isRemoved;
 			courses.splice(i, 1);
 		}
 	}
@@ -1377,7 +1562,7 @@ function addIsw(){
 		finding_period = false;
 
 		studyPlanLink.style.display = "inline-block";
-		studyPlanDiv.innerHTML = "<hr class='full'><p><b>可選擇的課程列表 Available Courses List</b></p><p>&nbsp;</p>";
+		studyPlanDiv.innerHTML = "<hr class='full'><p>"+studyPlanHeader+"</p><p>&nbsp;</p>";
 
 		// console.log("im_courses", im_courses);
 
@@ -1542,7 +1727,60 @@ var totalSort = {};
 // }
 
 
+// For umeh.top
+function checkProfBtn(btn, params) {
 
+	var profBtnFail = function(btn) {
+		var btnId = "#prof-" + btn;
+		$('<br><span class="umacinfo"><i class="fa fa-user-times" aria-hidden="true"></i> 未有此教授的資料 Professor info not found</span>').insertAfter(btnId);
+		$(btnId).hide();
+	};
+	var profBtnSuccess = function(btn, text) {
+		var btnId = "#prof-" + btn;
+		$(btnId).append(text);
+	};
+
+	if(params in searched_umacinfo) {
+		if(searched_umacinfo[params].error === true) {
+			return profBtnFail(btn);
+		}
+		else{
+			return profBtnSuccess(btn, searched_umacinfo[params].text);
+		}
+	}
+
+	if(window.jQuery){
+		$.getJSON(
+			"https://mpserver.umeh.top/all_comment_info/" + params,
+			{}
+		).done(function(data){
+			var marks = data.prof_info.result;
+			var star_levels = ["star-o", "star-half-o", "star"];
+			var star_enum = 2;
+
+			if(marks <= 4) {
+				star_enum = 1;
+			}
+			if(marks <= 1) {
+				star_enum = 0;
+			}
+
+			var text = ' (<i class="fa fa-' + star_levels[star_enum] + '" aria-hidden="true"></i>' + marks.toFixed(1) + '/5)';
+			profBtnSuccess(btn, text);
+
+			searched_umacinfo[params] = {
+				error: false,
+				text: text
+			}
+		}).fail(function(){
+			profBtnFail(btn);
+
+			searched_umacinfo[params] = {
+				error: true
+			}
+		});
+	}
+}
 
 function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 
@@ -1569,7 +1807,7 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 		return print_error("時間格式錯誤 / Time format invalid.");
 	}
 
-	var range = day + " " + starttext + "-" + endtext;
+	var range = day + " " + convertToDisp(starttext) + "-" + convertToDisp(endtext);
 
 	// if(window.jQuery && onServer===true){
 	// 	$.post(
@@ -1582,7 +1820,7 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 	finding_period = true;
 
 	studyPlanLink.style.display = "inline-block";
-	studyPlanDiv.innerHTML = "<hr class='full'><p><b>可選擇的課程列表 Available Courses List</b><br><small>區間 Range: " + range + "</small></p>";
+	studyPlanDiv.innerHTML = "<hr class='full'><p>"+studyPlanHeader+"<br><small>區間 Range: " + range + "</small></p>";
 
 
 	if(disable_scroll && disable_scroll===true){
@@ -1648,8 +1886,8 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 	else{
 		// studyPlanDiv.innerHTML += '<p>&nbsp;</p>';
 
-		studyPlanDiv.innerHTML += '<p>共有 <span id="course-count">' + (im_courses.length) + '</span> 節課</p>' +
-			'<p>上堂時間/Classes start at <br><span id="timeslots"></span></p>';
+		studyPlanDiv.innerHTML += '<p>共有 <span id="course-count">' + (im_courses.length) + '</span> 節課</p>';// +
+			// '<p>上堂時間/Classes start at <br><span id="timeslots"></span></p>';
 
 		allSlotItems = [];
 		selectedCourseCount = 0;
@@ -1707,7 +1945,6 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 		for(var jx in courses_info){
 
 			var ths = courses_info[jx];
-
 			if(ths.code !== im_courses[i].code){
 
 				// if same class, different section
@@ -1758,7 +1995,14 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 
 			// console.log(target_code_substr);
 
-	//		var umacinfo_text = '<br><a href="https://rateprof.tk/course/umac-mo/' + target_code_substr + '" target="_blank" class="umacinfo">前往暗黑資料庫查看評分</a>';
+			// var umacinfo_text = '<br><a href="https://rateprof.tk/course/umac-mo/' + target_code_substr + '" target="_blank" class="umacinfo">前往暗黑資料庫查看評分</a>';
+			var namecard = target_code_prof.split(" ")[0];
+			namecard = namecard[0].toUpperCase() + namecard.substr(1).toLowerCase();
+
+			var umacinfo_params = '?New_code=' + target_code_substr + '&prof_name=' + encodeURIComponent(target_code_prof.split(" \(in ")[0]);
+			profBtn++;
+
+			var umacinfo_text = '<a href="https://www.umeh.top/instructor.html' + umacinfo_params + '" target="_blank" class="umacinfo" id="prof-' + profBtn + '"><i class="fa fa-address-card-o" aria-hidden="true"></i> ' + namecard + '</a>';
 
 			// if(window.jQuery){
 			// 	$.get(
@@ -1772,9 +2016,9 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 
 			// var umacinfo_text = '<br><a href="javascript:getRate(\'' + target_code_substr + '\',\'' + target_code_prof.split("(in")[0].cleanup() + '\')" class="umacinfo">查看教授評分</a>';
 
-	//		if(has_more_than_one_prof === false){
-	//			umacinfo_text = '<br><span class="umacinfo">這科唯一的教授 The only prof of this course</span>'
-	//		}
+			if(has_more_than_one_prof === false){
+				umacinfo_text = '<br><span class="umacinfo"><i class="fa fa-info-circle" aria-hidden="true"></i> 這科唯一的教授 The only prof of this course</span>'
+			}
 
 			// console.log(dates_GBS_divId);
 
@@ -1795,25 +2039,29 @@ function find_period_pr(starttext, endtext, day, ven, disable_scroll){
 				stri += '<small>' + dates.join("<br>") + "</small>";
 				stri += '<br><span class="warning" style="background:#b8e4b8;color:#099848;">未與現有任何科目衝突 No Conflict</span>';
 
-				p.innerHTML = stri; // + umacinfo_text;
+				p.innerHTML = stri + umacinfo_text;
 				tmpDiv.appendChild(p);
 			}
 			else{
 				stri = "<del>" + stri + "</del>";
 				stri += '<span class="warning">與 ' + conflict_arr.join(', ') + ' 衝突</span>';
-				p.innerHTML = stri; // + umacinfo_text;
+				p.innerHTML = stri + umacinfo_text;
 				tmpDiv.appendChild(p);
+			}
+
+			if(has_more_than_one_prof === true) {
+				checkProfBtn(profBtn, umacinfo_params);
 			}
 		}
 
-		slots_collection.sort();
-
-		for (var i=0; i<slots_collection.length; i++) {
-			var this_slot = slots_collection[i];
-			var slot_a = document.createElement('span');
-			slot_a.innerHTML = '<label for="r-'+i+'"><span><input type="checkbox" id="r-'+i+'" checked onchange="filterCourses(\''+this_slot+'\')">' + this_slot + '</span></label>';
-			document.getElementById("timeslots").appendChild(slot_a);
-		}
+		// 上課時間概要列表
+		// slots_collection.sort();
+		// for (var i=0; i<slots_collection.length; i++) {
+		// 	var this_slot = slots_collection[i];
+		// 	var slot_a = document.createElement('span');
+		// 	slot_a.innerHTML = '<label for="r-'+i+'"><span><input type="checkbox" id="r-'+i+'" checked onchange="filterCourses(\''+this_slot+'\')">' + this_slot + '</span></label>';
+		// 	document.getElementById("timeslots").appendChild(slot_a);
+		// }
 
 	// 將object變成array
 		// var less_arr_fromObj = [];
@@ -1954,3 +2202,18 @@ if(localStorage["prSrchText"]){
 }
 
 genIt();
+window.setInterval(checkTextOverflow, 124);
+
+// var i=0;
+// function checkTextBlink() {
+// 	i++;
+// 	console.log(i);
+// 	if(i >= 2) {
+// 		$(".day-col a span.text-blink span").animate({width: "toggle"}, 150);
+// 	}
+// 	if(i==3) {
+// 		i = 0;
+// 	}
+// }
+// window.setInterval(checkTextBlink, 1500);
+
